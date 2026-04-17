@@ -72,6 +72,30 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Database connection monitoring
+import mongoose from "mongoose";
+mongoose.connection.on('connected', () => {
+    console.log('MongoDB connected');
+});
+
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected');
+});
+
+// Reconnect on disconnection
+mongoose.connection.on('disconnected', async () => {
+    console.log('Attempting to reconnect to MongoDB...');
+    try {
+        await connectDB();
+    } catch (error) {
+        console.error('Failed to reconnect:', error);
+    }
+});
+
 app.get('/', (req, res)=> res.send("Server is running"))
 app.use('/api/user', userRouter)
 app.use('/api/auth', authRouter)

@@ -2,6 +2,7 @@ import User from "../models/User.js"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import Car from "../models/Car.js";
+import mongoose from 'mongoose'
 
 
 // Generate JWT Token
@@ -77,13 +78,19 @@ export const getUserData = async (req, res) =>{
 // Get All Cars for the Frontend
 export const getCars = async (req, res) =>{
     try {
+        // Check database connection
+        if (mongoose.connection.readyState !== 1) {
+            return res.json({success: false, message: 'Database connection lost'})
+        }
+
         const cars = await Car.find({
             isAvaliable: true,
             isApproved: true
-        })
+        }).maxTimeMS(10000) // 10 second timeout
+
         res.json({success: true, cars})
     } catch (error) {
-        console.log(error.message);
-        res.json({success: false, message: error.message})
+        console.log('Error fetching cars:', error.message);
+        res.json({success: false, message: 'Failed to fetch cars'})
     }
 }
