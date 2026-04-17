@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import User from '../models/User.js'
+import { findOneWithTimeout, createWithTimeout, updateOneWithTimeout, findByIdAndUpdateWithTimeout } from '../utils/dbHelper.js'
 
 const generateToken = (user) => {
   const payload = { id: user._id.toString(), role: user.role }
@@ -27,7 +28,7 @@ export const login = async (req, res) => {
       return res.json({ success: false, message: 'Email, password, and role are required.' })
     }
 
-    const user = await User.findOne({ email })
+    const user = await findOneWithTimeout(User, { email })
     if (!user) {
       return res.json({ success: false, message: 'User not found' })
     }
@@ -91,7 +92,7 @@ export const forgotPassword = async (req, res) => {
       return res.json({ success: false, message: 'Email is required' })
     }
 
-    const user = await User.findOne({ email })
+    const user = await findOneWithTimeout(User, { email })
     if (!user) {
       return res.json({ success: true, message: 'If that email is registered, a reset link has been sent' })
     }
@@ -130,7 +131,7 @@ export const resetPassword = async (req, res) => {
       return res.json({ success: false, message: 'Passwords do not match' })
     }
 
-    const user = await User.findOne({ email, resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } })
+    const user = await findOneWithTimeout(User, { email, resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } })
     if (!user) {
       return res.json({ success: false, message: 'Reset link is invalid or has expired' })
     }
@@ -138,7 +139,7 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10)
     
     // Use findByIdAndUpdate to avoid full document validation on non-required fields
-    await User.findByIdAndUpdate(user._id, {
+    await findByIdAndUpdateWithTimeout(User, user._id, {
       password: hashedPassword,
       resetPasswordToken: '',
       resetPasswordExpires: null

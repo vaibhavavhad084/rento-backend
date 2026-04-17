@@ -4,6 +4,7 @@ import Car from "../models/Car.js";
 import User from "../models/User.js";
 import imagekit from "../configs/imageKit.js";
 import { sendBookingEmail } from "./notificationController.js";
+import { findOneWithTimeout, findWithTimeout, createWithTimeout, updateOneWithTimeout, findByIdAndUpdateWithTimeout } from '../utils/dbHelper.js'
 
 // Function to Check Availability of Car for a given Date
 const checkAvailability = async (car, pickupDate, returnDate)=>{
@@ -74,9 +75,9 @@ const applyRefund = async (booking) => {
             }
 
             // Deduct from admin revenue (admin gets commission/cut)
-            const admin = await User.findOne({ role: 'admin' })
+            const admin = await findOneWithTimeout(User, { role: 'admin' })
             if (admin) {
-                await User.findByIdAndUpdate(
+                await findByIdAndUpdateWithTimeout(User,
                     admin._id,
                     { $inc: { totalRefunded: booking.refundAmount } },
                     { new: true }
@@ -360,9 +361,9 @@ export const changeBookingStatus = async (req, res)=>{
                     }
 
                     // Add revenue to admin
-                    const admin = await User.findOne({ role: 'admin' })
+                    const admin = await findOneWithTimeout(User, { role: 'admin' })
                     if (admin) {
-                        await User.findByIdAndUpdate(
+                        await findByIdAndUpdateWithTimeout(User,
                             admin._id,
                             { $inc: { totalRevenue: booking.price } },
                             { new: true }

@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { sendBookingConfirmationEmail, sendBookingEmail } from './notificationController.js'
 import { sendCarApprovalEmail, sendCarRejectionEmail } from './notificationController.js'
+import { findOneWithTimeout, findWithTimeout, createWithTimeout, updateOneWithTimeout, findByIdAndUpdateWithTimeout } from '../utils/dbHelper.js'
 
 // Generate JWT Token
 const generateToken = (userId, role)=>{
@@ -50,7 +51,7 @@ const applyRefundToBooking = async (booking) => {
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body
-    const user = await User.findOne({ email })
+    const user = await findOneWithTimeout(User, { email })
     if (!user) {
       return res.json({ success: false, message: "Admin not found" })
     }

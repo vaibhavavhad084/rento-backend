@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import Car from "../models/Car.js";
 import mongoose from 'mongoose'
+import { findOneWithTimeout, findWithTimeout, createWithTimeout, updateOneWithTimeout, findByIdAndUpdateWithTimeout } from '../utils/dbHelper.js'
 
 
 // Generate JWT Token
@@ -25,13 +26,13 @@ export const registerUser = async (req, res)=>{
             return res.json({success: false, message: 'Mobile number must be 10 digits'})
         }
 
-        const userExists = await User.findOne({email})
+        const userExists = await findOneWithTimeout(User, {email})
         if(userExists){
             return res.json({success: false, message: 'User already exists'})
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
-        const user = await User.create({name, email, mobile, password: hashedPassword})
+        const user = await createWithTimeout(User, {name, email, mobile, password: hashedPassword})
         const token = generateToken(user._id.toString(), user.role)
         res.json({success: true, token})
 
@@ -45,7 +46,7 @@ export const registerUser = async (req, res)=>{
 export const loginUser = async (req, res)=>{
     try {
         const {email, password} = req.body
-        const user = await User.findOne({email})
+        const user = await findOneWithTimeout(User, {email})
         if(!user){
             return res.json({success: false, message: "User not found" })
         }
@@ -78,19 +79,14 @@ export const getUserData = async (req, res) =>{
 // Get All Cars for the Frontend
 export const getCars = async (req, res) =>{
     try {
-        // Check database connection
-        if (mongoose.connection.readyState !== 1) {
-            return res.json({success: false, message: 'Database connection lost'})
-        }
-
-        const cars = await Car.find({
+        const cars = await findWithTimeout(Car, {
             isAvaliable: true,
             isApproved: true
-        }).maxTimeMS(10000) // 10 second timeout
+        })
 
         res.json({success: true, cars})
     } catch (error) {
         console.log('Error fetching cars:', error.message);
-        res.json({success: false, message: 'Failed to fetch cars'})
+        res.json({success: false, message: error.message})
     }
 }
