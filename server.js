@@ -45,17 +45,23 @@ await createAdminUser();
 const allowedOrigins = [
   'http://localhost:5173', // Development
   'http://localhost:3000', // Development server
+  'https://client-cev35jm6q-vaibhavavhad264-6125s-projects.vercel.app', // Current Vercel URL
+  'https://client-rnleqgvmg-vaibhavavhad264-6125s-projects.vercel.app', // Latest Vercel URL
   process.env.FRONTEND_URL, // Production Vercel URL
 ].filter(Boolean)
 
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('Request from origin:', origin);
+    console.log('Allowed origins:', allowedOrigins);
+
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true)
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true)
     } else {
+      console.log('CORS blocked for origin:', origin);
       return callback(new Error('Not allowed by CORS'))
     }
   },
